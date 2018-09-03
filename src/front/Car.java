@@ -3,9 +3,11 @@
  */
 package front;
 
+import java.io.Serializable;
+
 import javax.swing.JTextField;
 
-public class Car {
+public class Car implements Serializable{
 	
 	private boolean flagCar;
 	

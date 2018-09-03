@@ -11,6 +11,13 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.io.Serializable;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
@@ -21,7 +28,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-public class MainPanel extends JPanel implements ActionListener {
+import sdf.SerDes;
+
+public class MainPanel extends JPanel implements ActionListener,Serializable {
 
 	private MyJLabel labelMark;
 	private MyJLabel labelModel;
@@ -59,6 +68,8 @@ public class MainPanel extends JPanel implements ActionListener {
 	
 	ArrayList<Car> carList;
 	ArrayList<String> cmdList;
+	
+	SerDes serdes;
 	
 	
 	public MainPanel() {
@@ -103,6 +114,7 @@ public class MainPanel extends JPanel implements ActionListener {
 		insurance = new MyJTextField(lengthTextField);
 		insuranceTo = new MyJTextField(lengthTextField);
 		dataFile = new MyJTextField(lengthTextField);
+		dataFile.setText(timeCarAdd());
 		/*
 		 * create buttons and add actionListener
 		 */
@@ -175,10 +187,22 @@ public class MainPanel extends JPanel implements ActionListener {
 		add(partialPanel3);
 		add(partialPanel4);
 		add(partialPanel5);
+		/*
+		 * serialize and deserialize
+		 */
+		serdes = new SerDes("baza.txt", carList);
+		try {
+			serdes.Read("baza.txt");
+		} catch (ClassNotFoundException | IOException e) {
+			System.out.println("z³y odczyt pierwszy");
+			e.printStackTrace();
+		}
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
+		
+		
 		Object source = arg0.getSource();
 		
 		if (source == addButton) {
@@ -201,6 +225,14 @@ public class MainPanel extends JPanel implements ActionListener {
 			cleanTextFields();
 			dispCmd();
 		}
+		
+		try {
+			serdes.Write();
+		} catch (IOException e) {
+			System.out.println("Wywali³o zapis");
+			e.printStackTrace();
+		}
+		
 	}
 	/*
 	 * primary method from button
@@ -239,8 +271,9 @@ public class MainPanel extends JPanel implements ActionListener {
 	/*
 	 * present time
 	 */
-	public void timeCarAdd() {
-		//TODO
+	public String timeCarAdd() {
+		LocalDateTime date = LocalDateTime.now();
+		return date.toString().substring(0, 10);
 	}
 	/*
 	 * methods history
@@ -308,7 +341,7 @@ public class MainPanel extends JPanel implements ActionListener {
 				car.getYearBuild()+d+
 				car.getInsurance()+e+
 				car.getInsuranceTo()+f+
-				car.getDataFile());
+				car.getDataFile()+g);
 	}
 	public void appendCarToArea(Car car){
 		String opis = "\nSamochód:\n";
@@ -326,7 +359,7 @@ public class MainPanel extends JPanel implements ActionListener {
 				car.getYearBuild()+d+
 				car.getInsurance()+e+
 				car.getInsuranceTo()+f+
-				car.getDataFile());
+				car.getDataFile()+g);
 	}
 	public void cleanAllFrames(){
 		mark.setText("");
@@ -374,6 +407,8 @@ public class MainPanel extends JPanel implements ActionListener {
 		
 		if(car.isEmpty() == true) {
 			cmdList.add("\n Wszystkie pola tekstowe s¹ puste");
+		}else if(car.getNrReg().length() == 0) {
+			cmdList.add("\n Podaj choæ nr rejestracyjny");
 		}else if(searchExsistingCar()){
 			cmdList.add("\n Nr rej istnieje ju¿ w danej bazie dancyh");
 		}else{
